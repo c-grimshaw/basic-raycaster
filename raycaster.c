@@ -18,22 +18,22 @@ typedef struct sphere {
 	unsigned char colour;
 } sphere;
 
-point camera = {0.0F, 0.0F, 0.0F};
 const float viewportWidth = 1.0, viewportHeight  = 1.0;
 const int canvasWidth   = 1080, canvasHeight = 1080; 
 const int projection_plane_d = 1;
+point camera = {0.0F, 0.0F, 0.0F};
 sphere scene[3];
 
 float *intersectRaySphere(point camera, point *D, sphere s);
 
 void insertHeader(FILE *fptr, const char *form, int w, int h)
 {
-	char buf[18] = {0};
+	char buf[20] = {0};
 	sprintf(buf, "%s\n%d %d\n%d\n", form, w, h, MAX_VAL);
 	fprintf(fptr, "%s", buf);
 }
 
-void putPixel(unsigned char canvas[canvasWidth][canvasHeight], int x, int y, unsigned char colour)
+void putPixel(unsigned char canvas[][canvasHeight], int x, int y, unsigned char colour)
 {
 	canvas[(canvasWidth / 2) + x][(canvasHeight / 2) - y] = colour;	
 }
@@ -73,11 +73,11 @@ unsigned char traceRay(point camera, point *D, float t_min, float t_max)
 	for(int i = 0; i < 3; i++) {
 		float *t = intersectRaySphere(camera, D, *(scene + i));
 		if(t[0] < 0) return BACKGROUND_COLOUR;
-		if(t[0] >= t_min && t[0] < t_max && t[0] < closest_t) {
+		if(t[0] > t_min && t[0] < t_max && t[0] < closest_t) {
 			closest_t = t[0];
 			closest_sphere = (scene + i);
 		}
-		if(t[1] >= t_min && t[1] < t_max && t[1] < closest_t) {
+		if(t[1] > t_min && t[1] < t_max && t[1] < closest_t) {
 			closest_t = t[1];
 			closest_sphere = (scene + i);
 		}
@@ -111,11 +111,11 @@ float *intersectRaySphere(point camera, point *D, sphere s)
 	return t;
 }
 
-void drawCanvas(FILE *fptr, unsigned char canvas[canvasWidth][canvasHeight])
+void drawCanvas(FILE *fptr, unsigned char canvas[][canvasHeight])
 {
 	for(int y = 0; y < canvasHeight; y++) {
 		for(int x = 0; x < canvasWidth; x++) {
-			fprintf(fptr, "%hd ", canvas[x][y]);
+			fprintf(fptr, "%u ", canvas[x][y]);
 		}
 		fprintf(fptr, "\n");
 	}
@@ -136,7 +136,7 @@ int main()
 	insertHeader(fptr, format, canvasWidth, canvasHeight);
 	// PGM body
 	
-	sphere red = {{0.0F, -1.0F, 3.0F}, 1, 100};
+	sphere red = {{0.0F, -1.0F, 12.0F}, 1, 100};
 	sphere blue = {{2.0F,  0.0F, 4.0F}, 1, 50};
 	sphere green = {{-2.0F, 0.0F, 4.0F}, 1, 125}; 
 	scene[0] = red;
@@ -144,7 +144,7 @@ int main()
 	scene[2] = green;
 
 	for(int x = -canvasWidth / 2; x < canvasWidth / 2; x++) {
-		for(int y = -canvasHeight / 2; y < canvasHeight / 2; y++) {
+		for(int y = -canvasHeight / 2; y <= canvasHeight / 2; y++) {
 			point *D = canvasToViewport(x, y);
 			unsigned char colour = traceRay(camera, D, 1, inf);
 			free(D);
