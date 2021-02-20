@@ -18,13 +18,22 @@ typedef struct sphere {
 	unsigned char colour;
 } sphere;
 
+typedef struct light {
+	unsigned char type;
+	float intensity;
+	point position;
+} light;
+
+typedef struct scene {
+	sphere *spheres;
+	light *lights;
+} scene;
+
 const float viewportWidth = 1.0, viewportHeight  = 1.0;
 const int canvasWidth   = 1080, canvasHeight = 1080; 
 const int projection_plane_d = 1;
-point camera = {0.0F, 0.0F, 0.0F};
-sphere scene[3];
-
-float *intersectRaySphere(point camera, point *D, sphere s);
+const point camera = {0.0F, 0.0F, 0.0F};
+scene *environment;
 
 void insertHeader(FILE *fptr, const char *form, int w, int h)
 {
@@ -65,30 +74,6 @@ float dot(point *a, point *b)
 	return c;
 }
 
-unsigned char traceRay(point camera, point *D, float t_min, float t_max)
-{
-	float closest_t = inf;
-	sphere *closest_sphere = NULL;
-
-	for(int i = 0; i < 3; i++) {
-		float *t = intersectRaySphere(camera, D, *(scene + i));
-		if(t[0] < 0) return BACKGROUND_COLOUR;
-		if(t[0] > t_min && t[0] < t_max && t[0] < closest_t) {
-			closest_t = t[0];
-			closest_sphere = (scene + i);
-		}
-		if(t[1] > t_min && t[1] < t_max && t[1] < closest_t) {
-			closest_t = t[1];
-			closest_sphere = (scene + i);
-		}
-		free(t);
-	}
-	if(closest_sphere == NULL) {
-		return BACKGROUND_COLOUR;
-	}
-	return closest_sphere->colour;
-}
-
 float *intersectRaySphere(point camera, point *D, sphere s)
 {
 	float *t = malloc(2 * sizeof(float));
@@ -109,6 +94,29 @@ float *intersectRaySphere(point camera, point *D, sphere s)
 	t[0] = (-b + sqrt(discriminant)) / (2*a);
 	t[1] = (-b - sqrt(discriminant)) / (2*a);
 	return t;
+}
+
+unsigned char traceRay(point camera, point *D, float t_min, float t_max)
+{
+	float closest_t = inf;
+	sphere *closest_sphere = NULL;
+
+	for(int i = 0; i < 3; i++) {
+		float *t = intersectRaySphere(camera, D, *(environment->spheres + i));
+		if(t[0] > t_min && t[0] < t_max && t[0] < closest_t) {
+			closest_t = t[0];
+			closest_sphere = (environment->spheres + i);
+		}
+		if(t[1] > t_min && t[1] < t_max && t[1] < closest_t) {
+			closest_t = t[1];
+			closest_sphere = (environment->spheres + i);
+		}
+		free(t);
+	}
+	if(closest_sphere == NULL) {
+		return BACKGROUND_COLOUR;
+	}
+	return closest_sphere->colour;
 }
 
 void drawCanvas(FILE *fptr, unsigned char canvas[][canvasHeight])
@@ -135,13 +143,14 @@ int main()
    	}
 	insertHeader(fptr, format, canvasWidth, canvasHeight);
 	// PGM body
-	
-	sphere red = {{0.0F, -1.0F, 12.0F}, 1, 100};
+	environment = malloc(sizeof(scene));
+	environment->spheres = malloc(3* sizeof(sphere));
+	sphere red = {{0.0F, -1.0F, 4.0F}, 1, 100};
 	sphere blue = {{2.0F,  0.0F, 4.0F}, 1, 50};
 	sphere green = {{-2.0F, 0.0F, 4.0F}, 1, 125}; 
-	scene[0] = red;
-	scene[1] = blue;
-	scene[2] = green;
+	environment->spheres[0] = red;
+	environment->spheres[1] = blue;
+	environment->spheres[2] = green;
 
 	for(int x = -canvasWidth / 2; x < canvasWidth / 2; x++) {
 		for(int y = -canvasHeight / 2; y <= canvasHeight / 2; y++) {
