@@ -26,7 +26,7 @@ typedef struct light {
 
 typedef struct scene {
 	sphere *spheres;
-	light *lights;
+	light  *lights;
 } scene;
 
 const float viewportWidth = 1.0, viewportHeight  = 1.0;
@@ -118,7 +118,28 @@ unsigned char traceRay(point camera, point *D, float t_min, float t_max)
 	}
 	return closest_sphere->colour;
 }
+/*
+float computeLighting(point P, point N)
+{
+	float i = 0.0;
+	
+	for(int i = 0; i < 3; i++) {
+		if(environment->(lights + i)->type == 0) {
+			i += environment->(lights + i)->intensity;
+		} else {
+			point *L;
+			if(environment->(lights + i)->type == 1) {
+				L = subtractPoints(environment->(lights+i)->position, P);
+			} else {
+				L = (environment->(lights+i)->position);
+			}
 
+			n_dot_l = dot(N, L);
+			if(n_dot_l > 0) {
+				i += (environment->(lights+i)->intensity) * n_dot_l / length(N) * length(L);
+	}
+}
+*/
 void drawCanvas(FILE *fptr, unsigned char canvas[][canvasHeight])
 {
 	for(int y = 0; y < canvasHeight; y++) {
@@ -145,6 +166,7 @@ int main()
 	// PGM body
 	environment = malloc(sizeof(scene));
 	environment->spheres = malloc(3* sizeof(sphere));
+
 	sphere red = {{0.0F, -1.0F, 4.0F}, 1, 100};
 	sphere blue = {{2.0F,  0.0F, 4.0F}, 1, 50};
 	sphere green = {{-2.0F, 0.0F, 4.0F}, 1, 125}; 
