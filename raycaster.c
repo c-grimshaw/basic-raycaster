@@ -12,8 +12,8 @@
 const float viewportWidth = 1.0, viewportHeight  = 1.0;
 const int canvasWidth   = 1080, canvasHeight = 1080; 
 const int projection_plane_d = 1;
-const Point camera = {0.0F, 0.0F, 0.0F};
-Scene *environment;
+Point camera = {0.0F, 0.0F, 0.0F};
+Scene* scene;
 
 void insertHeader(FILE *fptr, const char *form, int w, int h)
 {
@@ -36,16 +36,21 @@ Point* canvasToViewport(int x, int y)
 	return viewport_coord;
 }
 
-Point* subtractPoints(Point a, Point b)
+Point* sub(Point a, Point b)
 {
-	Point *c = malloc(sizeof(Point));
+	Point* c = malloc(sizeof(Point));
 	c->x = (a.x) - (b.x);
 	c->y = (a.y) - (b.y);
 	c->z = (a.z) - (b.z);
 	return c;
 }
 
-float dot(Point *a, Point *b)
+float length(Point* a)
+{
+	return sqrt((a->x * a->x)+(a->y * a->y)+(a->z * a->z));
+}
+
+float dot(Point* a, Point* b)
 {
 	float c = 0;
 	c += (a->x) * (b->x);
@@ -54,11 +59,11 @@ float dot(Point *a, Point *b)
 	return c;
 }
 
-float *intersectRaySphere(Point camera, Point *D, Sphere* s)
+float *intersectRaySphere(Point camera, Point* D, Sphere* s)
 {
 	float *t = malloc(2 * sizeof(float));
 	int r = s->radius;
-	Point *C0 = subtractPoints(camera, s->centre);
+	Point *C0 = sub(camera, s->centre);
 
 	float a = dot(D, D);
 	float b = 2 * dot(C0, D);
@@ -80,16 +85,15 @@ unsigned char traceRay(Point camera, Point *D, float t_min, float t_max)
 {
 	float closest_t = inf;
 	Sphere *closest_sphere = NULL;
-
-	for(int i = 0; i < environment->sc_sphere_list_sz; i++) {
-		float *t = intersectRaySphere(camera, D, environment->sc_sphere_list[i]);
+	for(int i = 0; i < scene->sc_sphere_list_sz; i++) {
+		float *t = intersectRaySphere(camera, D, scene->sc_sphere_list[i]);
 		if(t[0] > t_min && t[0] < t_max && t[0] < closest_t) {
 			closest_t = t[0];
-			closest_sphere = environment->sc_sphere_list[i];
+			closest_sphere = scene->sc_sphere_list[i];
 		}
 		if(t[1] > t_min && t[1] < t_max && t[1] < closest_t) {
 			closest_t = t[1];
-			closest_sphere = environment->sc_sphere_list[i];
+			closest_sphere = scene->sc_sphere_list[i];
 		}
 		free(t);
 	}
@@ -99,28 +103,36 @@ unsigned char traceRay(Point camera, Point *D, float t_min, float t_max)
 	return closest_sphere->colour;
 }
 
-/*
-float computeLighting(Point P, Point N)
-{
-	float i = 0.0;
-	
-	for(int i = 0; i < 3; i++) {
-		if(environment->(lights + i)->type == 0) {
-			i += environment->(lights + i)->intensity;
-		} else {
-			Point *L;
-			if(environment->(lights + i)->type == 1) {
-				L = subtractPoints(environment->(lights+i)->position, P);
-			} else {
-				L = (environment->(lights+i)->position);
-			}
 
-			n_dot_l = dot(N, L);
-			if(n_dot_l > 0) {
-				i += (environment->(lights+i)->intensity) * n_dot_l / length(N) * length(L);
+float computeLighting(Point* P, Point* N)
+{
+	float n_dot_l = 0.0, intensity = 0.0;
+	Point* L = malloc(sizeof(Point));
+
+	for(int i = 0; i < scene->sc_ambient_lights_sz; i++) {
+		intensity += scene->sc_ambient_lights[i]->intensity;
 	}
+	
+	for(int i = 0; i < scene->sc_point_lights_sz; i++) {
+		L = sub(scene->sc_point_lights[i]->position, *P);
+		n_dot_l = dot(N, L);
+		if (n_dot_l > 0) {
+			intensity += scene->sc_point_lights[i]->intensity * n_dot_l/(length(N) * length(L));
+		}
+	}
+	
+	for(int i = 0; i < scene->sc_directional_lights_sz; i++) {
+		L = &(scene->sc_directional_lights[i]->direction);
+		n_dot_l = dot(N, L);
+		if (n_dot_l > 0) {
+			intensity += scene->sc_directional_lights[i]->intensity\
+			* n_dot_l/(length(N) * length(L));
+		}
+	}
+
+	return intensity;
 }
-*/
+
 void drawCanvas(FILE *fptr, unsigned char canvas[][canvasHeight])
 {
 	for(int y = 0; y < canvasHeight; y++) {
@@ -134,10 +146,9 @@ void drawCanvas(FILE *fptr, unsigned char canvas[][canvasHeight])
 int main()
 {
 	unsigned char canvas[canvasWidth][canvasHeight];
-	FILE *fptr;
-	
-	fptr = fopen("/home/grim0ne/Programming/graphics/test.pgm", "w");
+	FILE* fptr;
 
+	fptr = fopen("/home/grim0ne/Programming/graphics/test.pgm", "w");
 	if(fptr == NULL)
    	{
       		printf("Error!");
@@ -145,11 +156,12 @@ int main()
    	}
 	insertHeader(fptr, format, canvasWidth, canvasHeight);
 	// PGM body
-	environment = scene_init();
-	scene_add_sphere(environment, (Point){0.0F, -1.0F, 4.0F}, 1, 100);
-	scene_add_sphere(environment, (Point){2.0F, 0.0F, 4.0F}, 1, 50);
-	scene_add_sphere(environment, (Point){-2.0F, 0.0F, 4.0F}, 1, 125);
-	scene_add_sphere(environment, (Point){-2.0F, 0.0F, 12.0F}, 1, 10);
+	scene = scene_init();
+	scene_add_sphere(scene, (Point){0.0F, -1.0F, 4.0F}, 1, 100);
+	scene_add_sphere(scene, (Point){2.0F, 0.0F, 4.0F}, 1, 50);
+	scene_add_sphere(scene, (Point){-2.0F, 0.0F, 4.0F}, 1, 125);
+	scene_add_sphere(scene, (Point){-2.0F, 0.0F, 12.0F}, 1, 10);
+	scene_add_sphere(scene, (Point){2.0F, 0.0F, 2.0F}, 1, 177);
 
 	for(int x = -canvasWidth / 2; x < canvasWidth / 2; x++) {
 		for(int y = -canvasHeight / 2; y <= canvasHeight / 2; y++) {
