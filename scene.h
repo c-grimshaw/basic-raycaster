@@ -37,4 +37,7 @@ typedef struct Scene {
 
 Scene* scene_init(void);
 void scene_add_sphere(Scene* scene, Point centre, int radius, unsigned char colour);
+void scene_add_am_light(Scene* scene, float intensity);
+void scene_add_pt_light(Scene* scene, float intensity, Point position);
+void scene_add_di_light(Scene* scene, float intensity, Point direction);
 void scene_print_spheres(Scene* scene);

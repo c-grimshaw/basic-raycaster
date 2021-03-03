@@ -36,18 +36,34 @@ Point* canvasToViewport(int x, int y)
 	return viewport_coord;
 }
 
+Point* add(Point a, Point b)
+{
+	Point* p = malloc(sizeof(Point));
+	p->x = (a.x) + (b.x);
+	p->y = (a.y) + (b.y);
+	p->z = (a.z) + (b.z);
+	return p;
+}
+
 Point* sub(Point a, Point b)
 {
-	Point* c = malloc(sizeof(Point));
-	c->x = (a.x) - (b.x);
-	c->y = (a.y) - (b.y);
-	c->z = (a.z) - (b.z);
-	return c;
+	Point* p = malloc(sizeof(Point));
+	p->x = (a.x) - (b.x);
+	p->y = (a.y) - (b.y);
+	p->z = (a.z) - (b.z);
+	return p;
 }
 
 float length(Point* a)
 {
 	return sqrt((a->x * a->x)+(a->y * a->y)+(a->z * a->z));
+}
+
+void scalar_multiply(float t, Point* a)
+{
+	a->x *= t;
+	a->y *= t;
+	a->z *= t;
 }
 
 float dot(Point* a, Point* b)
@@ -59,7 +75,7 @@ float dot(Point* a, Point* b)
 	return c;
 }
 
-float *intersectRaySphere(Point camera, Point* D, Sphere* s)
+float* intersectRaySphere(Point camera, Point* D, Sphere* s)
 {
 	float *t = malloc(2 * sizeof(float));
 	int r = s->radius;
@@ -80,29 +96,6 @@ float *intersectRaySphere(Point camera, Point* D, Sphere* s)
 	t[1] = (-b - sqrt(discriminant)) / (2*a);
 	return t;
 }
-
-unsigned char traceRay(Point camera, Point *D, float t_min, float t_max)
-{
-	float closest_t = inf;
-	Sphere *closest_sphere = NULL;
-	for(int i = 0; i < scene->sc_sphere_list_sz; i++) {
-		float *t = intersectRaySphere(camera, D, scene->sc_sphere_list[i]);
-		if(t[0] > t_min && t[0] < t_max && t[0] < closest_t) {
-			closest_t = t[0];
-			closest_sphere = scene->sc_sphere_list[i];
-		}
-		if(t[1] > t_min && t[1] < t_max && t[1] < closest_t) {
-			closest_t = t[1];
-			closest_sphere = scene->sc_sphere_list[i];
-		}
-		free(t);
-	}
-	if(closest_sphere == NULL) {
-		return BACKGROUND_COLOUR;
-	}
-	return closest_sphere->colour;
-}
-
 
 float computeLighting(Point* P, Point* N)
 {
@@ -133,6 +126,34 @@ float computeLighting(Point* P, Point* N)
 	return intensity;
 }
 
+unsigned char traceRay(Point camera, Point *D, float t_min, float t_max)
+{
+	float closest_t = inf;
+	Point *P, *N;
+	Sphere *closest_sphere = NULL;
+
+	for(int i = 0; i < scene->sc_sphere_list_sz; i++) {
+		float *t = intersectRaySphere(camera, D, scene->sc_sphere_list[i]);
+		if(t[0] > t_min && t[0] < t_max && t[0] < closest_t) {
+			closest_t = t[0];
+			closest_sphere = scene->sc_sphere_list[i];
+		}
+		if(t[1] > t_min && t[1] < t_max && t[1] < closest_t) {
+			closest_t = t[1];
+			closest_sphere = scene->sc_sphere_list[i];
+		}
+		free(t);
+	}
+	if(closest_sphere == NULL) {
+		return BACKGROUND_COLOUR;
+	}
+	scalar_multiply(closest_t, D);
+	P = add(camera, *D);
+	N = sub(*P, closest_sphere->centre);
+	scalar_multiply(1/length(N), N);
+	return closest_sphere->colour * computeLighting(P,N);
+}
+
 void drawCanvas(FILE *fptr, unsigned char canvas[][canvasHeight])
 {
 	for(int y = 0; y < canvasHeight; y++) {
@@ -161,7 +182,9 @@ int main()
 	scene_add_sphere(scene, (Point){2.0F, 0.0F, 4.0F}, 1, 50);
 	scene_add_sphere(scene, (Point){-2.0F, 0.0F, 4.0F}, 1, 125);
 	scene_add_sphere(scene, (Point){-2.0F, 0.0F, 12.0F}, 1, 10);
-	scene_add_sphere(scene, (Point){2.0F, 0.0F, 2.0F}, 1, 177);
+	scene_add_am_light(scene, 0.2);
+	scene_add_pt_light(scene, 0.6, (Point){2, 1, 0});
+	scene_add_di_light(scene, 0.2, (Point){1, 4, 4});
 
 	for(int x = -canvasWidth / 2; x < canvasWidth / 2; x++) {
 		for(int y = -canvasHeight / 2; y <= canvasHeight / 2; y++) {
