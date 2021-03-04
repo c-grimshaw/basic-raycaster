@@ -1,6 +1,46 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "scene.h"
+
+Point* add(Point a, Point b)
+{
+	Point* p = malloc(sizeof(Point));
+	p->x = (a.x) + (b.x);
+	p->y = (a.y) + (b.y);
+	p->z = (a.z) + (b.z);
+	return p;
+}
+
+Point* sub(Point a, Point b)
+{
+	Point* p = malloc(sizeof(Point));
+	p->x = (a.x) - (b.x);
+	p->y = (a.y) - (b.y);
+	p->z = (a.z) - (b.z);
+	return p;
+}
+
+float length(Point* a)
+{
+	return sqrt((a->x * a->x)+(a->y * a->y)+(a->z * a->z));
+}
+
+void scalar_multiply(float t, Point* a)
+{
+	a->x *= t;
+	a->y *= t;
+	a->z *= t;
+}
+
+float dot(Point* a, Point* b)
+{
+	float c = 0;
+	c += (a->x) * (b->x);
+	c += (a->y) * (b->y);
+	c += (a->z) * (b->z);
+	return c;
+}
 
 Scene* scene_init(void) {
     Scene* s = malloc(sizeof(Scene));

@@ -35,6 +35,14 @@ typedef struct Scene {
 	size_t    sc_directional_lights_sz;
 } Scene;
 
+/* Point functions */
+Point* add(Point a, Point b);
+Point* sub(Point a, Point b);
+float length(Point* a);
+void scalar_multiply(float t, Point* a);
+float dot(Point* a, Point* b);
+
+/* Scene functions */
 Scene* scene_init(void);
 void scene_add_sphere(Scene* scene, Point centre, int radius, unsigned char colour);
 void scene_add_am_light(Scene* scene, float intensity);

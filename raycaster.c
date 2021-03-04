@@ -9,9 +9,7 @@
 #define BACKGROUND_COLOUR      255
 #define BLACK                    1
 
-const float viewportWidth = 1.0, viewportHeight  = 1.0;
 const int canvasWidth   = 1080, canvasHeight = 1080; 
-const int projection_plane_d = 1;
 Point camera = {0.0F, 0.0F, 0.0F};
 Scene* scene;
 
@@ -29,50 +27,14 @@ void putPixel(unsigned char canvas[][canvasHeight], int x, int y, unsigned char 
 
 Point* canvasToViewport(int x, int y)
 {
+	const int projection_plane_d = 1;
+	const float viewportWidth = 1.0, viewportHeight  = 1.0;
 	Point *viewport_coord = malloc(sizeof(Point));
+
 	viewport_coord->x = (x * viewportWidth) / canvasWidth;
 	viewport_coord->y = (y * viewportHeight) / canvasHeight;
 	viewport_coord->z = projection_plane_d;
 	return viewport_coord;
-}
-
-Point* add(Point a, Point b)
-{
-	Point* p = malloc(sizeof(Point));
-	p->x = (a.x) + (b.x);
-	p->y = (a.y) + (b.y);
-	p->z = (a.z) + (b.z);
-	return p;
-}
-
-Point* sub(Point a, Point b)
-{
-	Point* p = malloc(sizeof(Point));
-	p->x = (a.x) - (b.x);
-	p->y = (a.y) - (b.y);
-	p->z = (a.z) - (b.z);
-	return p;
-}
-
-float length(Point* a)
-{
-	return sqrt((a->x * a->x)+(a->y * a->y)+(a->z * a->z));
-}
-
-void scalar_multiply(float t, Point* a)
-{
-	a->x *= t;
-	a->y *= t;
-	a->z *= t;
-}
-
-float dot(Point* a, Point* b)
-{
-	float c = 0;
-	c += (a->x) * (b->x);
-	c += (a->y) * (b->y);
-	c += (a->z) * (b->z);
-	return c;
 }
 
 float* intersectRaySphere(Point camera, Point* D, Sphere* s)
@@ -110,7 +72,8 @@ float computeLighting(Point* P, Point* N)
 		L = sub(scene->sc_point_lights[i]->position, *P);
 		n_dot_l = dot(N, L);
 		if (n_dot_l > 0) {
-			intensity += scene->sc_point_lights[i]->intensity * n_dot_l/(length(N) * length(L));
+			intensity += scene->sc_point_lights[i]->intensity\
+			* n_dot_l/(length(N) * length(L));
 		}
 	}
 	
@@ -130,7 +93,7 @@ unsigned char traceRay(Point camera, Point *D, float t_min, float t_max)
 {
 	float closest_t = inf;
 	Point *P, *N;
-	Sphere *closest_sphere = NULL;
+	Sphere *closest_sphere = 0;
 
 	for(int i = 0; i < scene->sc_sphere_list_sz; i++) {
 		float *t = intersectRaySphere(camera, D, scene->sc_sphere_list[i]);
@@ -144,7 +107,7 @@ unsigned char traceRay(Point camera, Point *D, float t_min, float t_max)
 		}
 		free(t);
 	}
-	if(closest_sphere == NULL) {
+	if(closest_sphere == 0) {
 		return BACKGROUND_COLOUR;
 	}
 	scalar_multiply(closest_t, D);
@@ -169,8 +132,8 @@ int main()
 	unsigned char canvas[canvasWidth][canvasHeight];
 	FILE* fptr;
 
-	fptr = fopen("/home/grim0ne/Programming/graphics/test.pgm", "w");
-	if(fptr == NULL)
+	fptr = fopen("./test.pgm", "w");
+	if(fptr == 0)
    	{
       		printf("Error!");
       		exit(1);
@@ -181,7 +144,6 @@ int main()
 	scene_add_sphere(scene, (Point){0.0F, -1.0F, 4.0F}, 1, 100);
 	scene_add_sphere(scene, (Point){2.0F, 0.0F, 4.0F}, 1, 50);
 	scene_add_sphere(scene, (Point){-2.0F, 0.0F, 4.0F}, 1, 125);
-	scene_add_sphere(scene, (Point){-2.0F, 0.0F, 12.0F}, 1, 10);
 	scene_add_am_light(scene, 0.2);
 	scene_add_pt_light(scene, 0.6, (Point){2, 1, 0});
 	scene_add_di_light(scene, 0.2, (Point){1, 4, 4});
