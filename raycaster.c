@@ -9,7 +9,7 @@
 #define BACKGROUND_COLOUR      255
 #define BLACK                    1
 
-const int canvasWidth   = 1080, canvasHeight = 1080; 
+const int canvasWidth   = 2080, canvasHeight = 2080; 
 Point camera = {0.0F, 0.0F, 0.0F};
 Scene* scene;
 
@@ -41,14 +41,14 @@ float* intersectRaySphere(Point camera, Point* D, Sphere* s)
 {
 	float *t = malloc(2 * sizeof(float));
 	int r = s->radius;
-	Point *C0 = sub(camera, s->centre);
+	Point C0 = sub(&camera, &(s->centre));
 
 	float a = dot(D, D);
-	float b = 2 * dot(C0, D);
-	float c = dot(C0, C0) - r*r;
+	float b = 2 * dot(&C0, D);
+	float c = dot(&C0, &C0) - r*r;
 
 	float discriminant = b*b - 4*a*c;
-	free(C0);
+
 	if(discriminant < 0) {
 		t[0] = inf;
 		t[1] = inf;
@@ -62,37 +62,37 @@ float* intersectRaySphere(Point camera, Point* D, Sphere* s)
 float computeLighting(Point* P, Point* N)
 {
 	float n_dot_l = 0.0, intensity = 0.0;
-	Point* L = malloc(sizeof(Point));
+	Point L;
 
 	for(int i = 0; i < scene->sc_ambient_lights_sz; i++) {
 		intensity += scene->sc_ambient_lights[i]->intensity;
 	}
 	
 	for(int i = 0; i < scene->sc_point_lights_sz; i++) {
-		L = sub(scene->sc_point_lights[i]->position, *P);
-		n_dot_l = dot(N, L);
+		L = sub(&(scene->sc_point_lights[i]->position), P);
+		n_dot_l = dot(N, &L);
 		if (n_dot_l > 0) {
 			intensity += scene->sc_point_lights[i]->intensity\
-			* n_dot_l/(length(N) * length(L));
+			* n_dot_l/(length(N) * length(&L));
 		}
 	}
 	
 	for(int i = 0; i < scene->sc_directional_lights_sz; i++) {
-		L = &(scene->sc_directional_lights[i]->direction);
-		n_dot_l = dot(N, L);
+		L = scene->sc_directional_lights[i]->direction;
+		n_dot_l = dot(N, &L);
 		if (n_dot_l > 0) {
 			intensity += scene->sc_directional_lights[i]->intensity\
-			* n_dot_l/(length(N) * length(L));
+			* n_dot_l/(length(N) * length(&L));
 		}
 	}
 
 	return intensity;
 }
 
-unsigned char traceRay(Point camera, Point *D, float t_min, float t_max)
+unsigned char traceRay(Point camera, Point* D, float t_min, float t_max)
 {
 	float closest_t = inf;
-	Point *P, *N;
+	Point P, N;
 	Sphere *closest_sphere = 0;
 
 	for(int i = 0; i < scene->sc_sphere_list_sz; i++) {
@@ -110,11 +110,11 @@ unsigned char traceRay(Point camera, Point *D, float t_min, float t_max)
 	if(closest_sphere == 0) {
 		return BACKGROUND_COLOUR;
 	}
-	scalar_multiply(closest_t, D);
-	P = add(camera, *D);
-	N = sub(*P, closest_sphere->centre);
-	scalar_multiply(1/length(N), N);
-	return closest_sphere->colour * computeLighting(P,N);
+	P = s_mul(closest_t, D);
+	P = add(&camera, &P);
+	N = sub(&P, &(closest_sphere->centre));
+	N = s_mul(1/length(&N), &N);
+	return closest_sphere->colour * computeLighting(&P,&N);
 }
 
 void drawCanvas(FILE *fptr, unsigned char canvas[][canvasHeight])
@@ -141,9 +141,9 @@ int main()
 	insertHeader(fptr, format, canvasWidth, canvasHeight);
 	// PGM body
 	scene = scene_init();
-	scene_add_sphere(scene, (Point){0.0F, -1.0F, 4.0F}, 1, 100);
-	scene_add_sphere(scene, (Point){2.0F, 0.0F, 4.0F}, 1, 50);
-	scene_add_sphere(scene, (Point){-2.0F, 0.0F, 4.0F}, 1, 125);
+	scene_add_sphere(scene, (Point){0.0F, -1.0F, 4.0F}, 1, 150);
+	scene_add_sphere(scene, (Point){2.0F, 0.0F, 4.0F}, 1, 150);
+	scene_add_sphere(scene, (Point){-2.0F, 0.0F, 4.0F}, 1, 150);
 	scene_add_am_light(scene, 0.2);
 	scene_add_pt_light(scene, 0.6, (Point){2, 1, 0});
 	scene_add_di_light(scene, 0.2, (Point){1, 4, 4});

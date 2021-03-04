@@ -36,10 +36,10 @@ typedef struct Scene {
 } Scene;
 
 /* Point functions */
-Point* add(Point a, Point b);
-Point* sub(Point a, Point b);
+Point add(Point* a, Point* b);
+Point sub(Point* a, Point* b);
 float length(Point* a);
-void scalar_multiply(float t, Point* a);
+Point s_mul(float t, Point* a);
 float dot(Point* a, Point* b);
 
 /* Scene functions */

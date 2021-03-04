@@ -3,22 +3,14 @@
 #include <math.h>
 #include "scene.h"
 
-Point* add(Point a, Point b)
+Point add(Point* a, Point* b)
 {
-	Point* p = malloc(sizeof(Point));
-	p->x = (a.x) + (b.x);
-	p->y = (a.y) + (b.y);
-	p->z = (a.z) + (b.z);
-	return p;
+	return (Point){a->x + b->x, a->y + b->y, a->z + b->z};
 }
 
-Point* sub(Point a, Point b)
+Point sub(Point* a, Point* b)
 {
-	Point* p = malloc(sizeof(Point));
-	p->x = (a.x) - (b.x);
-	p->y = (a.y) - (b.y);
-	p->z = (a.z) - (b.z);
-	return p;
+	return (Point){a->x - b->x, a->y - b->y, a->z - b->z};
 }
 
 float length(Point* a)
@@ -26,11 +18,9 @@ float length(Point* a)
 	return sqrt((a->x * a->x)+(a->y * a->y)+(a->z * a->z));
 }
 
-void scalar_multiply(float t, Point* a)
+Point s_mul(float t, Point* a)
 {
-	a->x *= t;
-	a->y *= t;
-	a->z *= t;
+	return (Point){t * a->x, t * a->y, t * a->z};
 }
 
 float dot(Point* a, Point* b)
