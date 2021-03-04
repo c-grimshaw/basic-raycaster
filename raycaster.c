@@ -3,14 +3,13 @@
 #include <math.h>
 #include "scene.h"
 
-#define FORMAT     "P2"
-#define INF        1.0/0.0
-#define MAX_VAL    255
+#define FORMAT                "P5"
+#define INF                1.0/0.0
+#define MAX_VAL                255
 #define BACKGROUND_COLOUR      255
 #define BLACK                    1
 
-const int canvasWidth   = 1080, canvasHeight = 1080; 
-Point camera = {0.0F, 0.0F, 0.0F};
+const size_t canvasWidth = 4080, canvasHeight = 4080; 
 Scene* scene;
 
 void insertHeader(FILE *fptr, const char *form, int w, int h)
@@ -18,11 +17,6 @@ void insertHeader(FILE *fptr, const char *form, int w, int h)
 	char buf[20] = {0};
 	sprintf(buf, "%s\n%d %d\n%d\n", form, w, h, MAX_VAL);
 	fprintf(fptr, "%s", buf);
-}
-
-void putPixel(unsigned char canvas[][canvasHeight], int x, int y, unsigned char colour)
-{
-	canvas[(canvasWidth / 2) + x][(canvasHeight / 2) - y] = colour;	
 }
 
 Point canvasToViewport(int x, int y)
@@ -64,9 +58,8 @@ float computeLighting(Point* P, Point* N)
 	float n_dot_l = 0.0, intensity = 0.0;
 	Point L;
 
-	for(int i = 0; i < scene->sc_ambient_lights_sz; i++) {
+	for(int i = 0; i < scene->sc_ambient_lights_sz; i++) 
 		intensity += scene->sc_ambient_lights[i]->intensity;
-	}
 	
 	for(int i = 0; i < scene->sc_point_lights_sz; i++) {
 		L = sub(&(scene->sc_point_lights[i]->position), P);
@@ -107,9 +100,8 @@ unsigned char traceRay(Point camera, Point* D, float t_min, float t_max)
 		}
 		free(t);
 	}
-	if(closest_sphere == 0) {
+	if(closest_sphere == 0)
 		return BACKGROUND_COLOUR;
-	}
 	P = s_mul(closest_t, D);
 	P = add(&camera, &P);
 	N = sub(&P, &(closest_sphere->centre));
@@ -117,29 +109,18 @@ unsigned char traceRay(Point camera, Point* D, float t_min, float t_max)
 	return closest_sphere->colour * computeLighting(&P, &N);
 }
 
-void drawCanvas(FILE *fptr, unsigned char canvas[][canvasHeight])
-{
-	for(int y = 0; y < canvasHeight; y++) {
-		for(int x = 0; x < canvasWidth; x++) {
-			fprintf(fptr, "%u ", canvas[x][y]);
-		}
-		fprintf(fptr, "\n");
-	}
-}
-
 int main()
 {
-	unsigned char canvas[canvasWidth][canvasHeight], colour;
+	unsigned char colour;
 	FILE* fptr;
-	Point D;
+	Point D, camera = (Point){0,0,0};
 
-	fptr = fopen("./test.pgm", "w");
+	fptr = fopen("./test.pgm", "wb");
 	if(fptr == 0)
    	{
       		printf("Error!");
       		exit(1);
    	}
-
 	insertHeader(fptr, FORMAT, canvasWidth, canvasHeight);
 	// PGM body
 	scene = scene_init();
@@ -151,13 +132,13 @@ int main()
 	scene_add_pt_light(scene, 0.6, (Point){2, 1, 0});
 	scene_add_di_light(scene, 0.2, (Point){1, 4, 4});
 
-	for(int x = -canvasWidth / 2; x < canvasWidth / 2; x++) {
-		for(int y = canvasHeight / 2; y > -canvasHeight / 2; y--) {
-			D = canvasToViewport(x, y);
+	for (int y = 0; y < canvasHeight - 1; y++) {
+		for (int x = 0; x < canvasWidth - 1; x++) {
+			D = canvasToViewport(x - canvasWidth/2, -y + canvasHeight/2);
 			colour = traceRay(camera, &D, 1, INF);
-			putPixel(canvas, x, y, colour);
+			fputc(colour, fptr); 
 		}
+		fprintf(fptr, "\n");
 	}
-	drawCanvas(fptr, canvas);
 	fclose(fptr);
 }
