@@ -13,23 +13,20 @@ Point sub(Point* a, Point* b)
 	return (Point){a->x - b->x, a->y - b->y, a->z - b->z};
 }
 
-float length(Point* a)
-{
-	return sqrt((a->x * a->x)+(a->y * a->y)+(a->z * a->z));
-}
 
 Point s_mul(float t, Point* a)
 {
 	return (Point){t * a->x, t * a->y, t * a->z};
 }
 
+float length(Point* a)
+{
+	return sqrt((a->x * a->x)+(a->y * a->y)+(a->z * a->z));
+}
+
 float dot(Point* a, Point* b)
 {
-	float c = 0;
-	c += (a->x) * (b->x);
-	c += (a->y) * (b->y);
-	c += (a->z) * (b->z);
-	return c;
+	return (float)((a->x * b->x)+(a->y * b->y)+(a->z * b->z));
 }
 
 Scene* scene_init(void) {
