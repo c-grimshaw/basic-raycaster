@@ -5,7 +5,7 @@ This is an implementation of a basic raytracer with simple shading as described 
 These files generate a scene consisting of ominous floating spheres affected by simple lighting.
 
 ## File Format
-__Reference: [NETBPM file formats](https://en.wikipedia.org/wiki/Netpbm#File_formats)__
+__Reference: [NETPBM file formats](https://en.wikipedia.org/wiki/Netpbm#File_formats)__
 
 This program generates a PGM file, which, while trivial to read/write, are an egregious offence to image compression standards everywhere. PGM stands for "Portable Gray Map". It comes in two formats: ASCII and binary (denoted by magic numbers **P2** and **P5**, respectively).
 
