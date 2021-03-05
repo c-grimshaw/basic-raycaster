@@ -21,10 +21,9 @@ void prepare_scene(void)
 int main()
 {
 	unsigned char colour;
-	FILE* fptr;
+	FILE* fptr = fopen("./spheres.pgm", "wb");
 	Point D, camera = (Point){0,0,0};
 
-	fptr = fopen("./spheres.pgm", "wb");
 	insert_header(fptr, format, canvas_width, canvas_height);
 	prepare_scene();
 
