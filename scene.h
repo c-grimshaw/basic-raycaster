@@ -40,6 +40,7 @@ typedef struct Scene {
 	size_t    sc_directional_lights_sz;
 } Scene;
 
+/* Globals declaration */
 Scene* scene;
 extern const size_t canvas_width, canvas_height;
 

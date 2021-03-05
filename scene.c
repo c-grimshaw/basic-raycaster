@@ -23,12 +23,9 @@ Point sub(Point* a, Point* b) {
 	return (Point){a->x - b->x, a->y - b->y, a->z - b->z};
 }
 
-
 Point s_mul(float t, Point* a) {
 	return (Point){t * a->x, t * a->y, t * a->z};
 }
-
-
 
 float length(Point* a) {
 	return sqrt((a->x * a->x)+(a->y * a->y)+(a->z * a->z));
