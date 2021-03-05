@@ -1,4 +1,9 @@
-#define MAX_OBJ 8 
+#define MAX_OBJ               8 
+#define HEADER_LENGTH        18
+#define INF             1.0/0.0
+#define MAX_VAL             255
+#define BACKGROUND_COLOUR   255
+#define BLACK                 1
 
 typedef struct Point {
 	float x, y, z;
@@ -35,6 +40,12 @@ typedef struct Scene {
 	size_t    sc_directional_lights_sz;
 } Scene;
 
+Scene* scene;
+extern const size_t canvas_width, canvas_height;
+
+/* Setup functions */
+void insert_header(FILE* fptr, const char* form, int width, int height);
+
 /* Point functions */
 Point add(Point* a, Point* b);
 Point sub(Point* a, Point* b);
@@ -44,8 +55,12 @@ float dot(Point* a, Point* b);
 
 /* Scene functions */
 Scene* scene_init(void);
+void destroy_scene(Scene* scene);
 void scene_add_sphere(Scene* scene, Point centre, int radius, unsigned char colour);
 void scene_add_am_light(Scene* scene, float intensity);
 void scene_add_pt_light(Scene* scene, float intensity, Point position);
 void scene_add_di_light(Scene* scene, float intensity, Point direction);
-void scene_print_spheres(Scene* scene);
+
+/* Rendering functions */
+Point canvas_to_viewport(int x, int y);
+unsigned char trace_ray(Point camera, Point* D, float t_min, float t_max);
